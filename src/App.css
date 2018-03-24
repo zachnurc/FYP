@@ -1,0 +1,43 @@
+.App{
+  background: #F5F5F5;
+  font-family: arial;
+}
+
+.inner {
+  margin: 0 auto;
+  width: 1200px;
+  color: #212121;
+}
+
+div{
+  margin: 10px;
+}
+
+form{
+  background: #607D8B;
+  border-radius: 5px;
+  border: 0px solid;
+  padding: 10px;
+  position: relative;
+  color: #fff;
+}
+
+label{
+  margin-right: 10px;
+}
+
+nav{
+  margin-left: 10px;
+  a{
+    text-decoration: none;
+    color: #FFF;
+    background: #9E9E9E;
+    border-radius: 5px;
+    padding: 5px 5px 15px 5px;
+    border: 1px solid black;
+    position: relative;
+    &.active{
+      background: #607D8B;
+    }
+  }
+}
