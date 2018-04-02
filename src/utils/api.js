@@ -54,7 +54,12 @@ export function getStationPlace(stationCode){
 }
 
 export function getRoute(startLat, startLong, endLat, endLong, date, time){
-  const url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&modes=train`
+  var url;
+  if (date == null && time == null){
+    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}.json?app_id=${APP_ID}&app_key=${APP_KEY}&modes=train`
+  } else {
+    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&modes=train`
+  }
   return get(url).then((response)=>{
     if(response.data.error){
       throw new Error('api error')

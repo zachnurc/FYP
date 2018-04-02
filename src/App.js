@@ -13,7 +13,8 @@ class App extends Component {
       end: ``,
       journey_type: ` S`,
       ticket_type: `anytime`,
-      railcard: ``
+      railcard: ``,
+      cost: ``
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -36,19 +37,14 @@ class App extends Component {
     return false
   }
 
-  async splitSingleTrip(start, end, date, time) {
+  async splitSingleTrip(start,end,date,time){
 
     var serviceID
     var stops = []
     distance = []
+    var endTime
 
-    if(this.isDateWeekend()){
-      this.state.ticket_type = `offpeak`
-    } else {
-      this.state.ticket_type = `anytime`
-    }
-
-    if (time===undefined && date === undefined){
+    if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
         serviceID = data
       })
@@ -66,7 +62,7 @@ class App extends Component {
     var endpos
     var temp = []
 
-    for (var i=0; i<stops.length;i++){
+    for (var i=0; i < stops.length;i++){
       temp[i] = stops[i].station_code
       if (temp[i] === start){
         startpos = i
@@ -77,9 +73,6 @@ class App extends Component {
     }
     stops = temp
 
-    var fareData = []
-    var fare = []
-
     if (startpos > endpos){
       stops.reverse()
       temp = []
@@ -89,9 +82,27 @@ class App extends Component {
 
     stops = stops.slice(startpos, endpos+1)
 
+    endTime = stops[stops.length-1].aimed_arrival_time
 
-    for(var youter=0; youter<stops.length-1; youter++) {
-      for(var yinner=youter+1; yinner<stops.length; yinner++){
+    return [stops, endTime]
+
+  }
+
+  async calculateFares(stops){
+
+    if(this.isDateWeekend()){
+      this.state.ticket_type = `offpeak`
+    } else {
+      this.state.ticket_type = `anytime`
+    }
+
+    var fare = []
+    var fareData = []
+    var start = stops[0]
+    var end = stops[stops.length-1]
+
+    for(var youter = 0; youter < stops.length-1; youter++) {
+      for(var yinner = youter+1; yinner < stops.length; yinner++){
         await getFare(stops[youter],stops[yinner],this.state.railcard).then(data=>{
           fareData = data
           fare = fareData.map(data => {
@@ -99,15 +110,20 @@ class App extends Component {
             const fare = data.adult.fare
             return { ticket, fare }
           })
+
+          //filter needs to check if index contains not equals
+
           const filterItems = (query) => {
-            return fare.filter((el) =>
-              el.ticket.toLowerCase().indexOf(query.toLowerCase()) > -1
+            return fare.filter((e) =>
+              e.ticket.toLowerCase().indexOf(query.toLowerCase()) > -1
             )
           }
+
           var fareCopy = fare
           //look at changing this to catch every fail
           //also moron this doesnt't work properly
           //this falls to catch on first fail
+          //the else statement here probably needs looking at again
           if(this.state.ticket_type === `offpeak`){
             try {
               fare = filterItems(this.state.journey_type)
@@ -175,30 +191,29 @@ class App extends Component {
 
     const result = allCombinsFrom(start)
 
-    console.log(result)
-    console.log(result.cost)
-    console.log('done')
     var cost = result.cost
     return parseInt(cost)
 
   }
 
+
   async handleSubmit(e) {
     //TODO
     //offpeak support (check off-peak vs offpeak)
+    //check super saver or other possible cheap ticket types
     //try catch for offpeak needs fixing
-    //multi-train journeys
-    //render results on page
     //save favourites
     //show recents
 
     e.preventDefault()
 
+    console.log('submit');
 
     const placeTable = {
       "Loughborough": "LBO",
       "Loughborough (Leics)": "LBO",
       "Derby": "DBY",
+      "Beeston": "BEE",
       "Exeter St Davids": "EXD",
       "Birmingham New Street": "BHM",
       "Leicester": "LEI"
@@ -240,7 +255,10 @@ class App extends Component {
 
     var route
 
-    await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,this.state.date,this.state.time).then(data=>{
+    var date = this.state.date;
+    var time = this.state.time;
+
+    await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
       route = data[0].route_parts
       route.splice(0,1)
       route.splice(route.length-1,1)
@@ -259,24 +277,29 @@ class App extends Component {
 
     var startStation
     var endStation
-    var date = this.state.date
-    var time = this.state.time
-    var totalCost = 0
-    var cost = 0
+    date = this.state.date
+    time = this.state.time
+    var stops = []
 
     console.log(route)
-    console.log(date)
-    console.log(time)
 
     for(var counter = 0; counter < route.length; counter++){
       startStation = placeTable[route[counter].start]
       endStation = placeTable[route[counter].end]
-      cost =  await this.splitSingleTrip(startStation, endStation, date, time)
-      totalCost += cost
+      var temp = await this.splitSingleTrip(startStation, endStation, date, time)
+      time = temp[1]
+      for(var i = 0; i < temp[0].length; i++){
+        stops.push(temp[0][i]);
+      }
     }
 
-    console.log(totalCost)
-    document.getElementById("results").innerHTML = totalCost;
+    var cost = await this.calculateFares(stops)
+    cost = cost/100
+
+    this.setState({cost:cost})
+
+    console.log(this.state.cost)
+    console.log("done")
 
     //works for a single train journey
 
@@ -288,62 +311,95 @@ class App extends Component {
 
   }
 
+  renderResults(){
+
+    return (
+      <table>
+        <thead>
+          <tr>
+            <td>Start Station</td>
+            <td>End Station</td>
+            <td>Cost</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{this.state.start}</td>
+            <td>{this.state.end}</td>
+            <td>{this.state.cost}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+  }
+
   render() {
     return (
       <div className="App">
         <div className="inner">
-          <form onSubmit={this.handleSubmit}>
-            <label>
-              Start Station:
-              <input
-                name="start"
-                type="text"
-                value={this.state.start}
-                onChange={this.handleChange}
-              />
-            </label>
-            <label>
-              End Station:
-              <input
-                name="end"
-                type="text"
-                value={this.state.end}
-                onChange={this.handleChange}
-              />
-            </label>
-            <label>
-              Date:
-              <input
-                name="date"
-                type="date"
-                value={this.state.date}
-                onChange={this.handleChange}
-              />
-            </label>
-            <label>
-              Time:
-              <input
-                name="time"
-                type="time"
-                value={this.state.time}
-                onChange={this.handleChange}
-              />
-            </label>
-            <label>
-              Railcard:
-              <select
-                name="railcard"
-                value={this.state.railcard}
-                onChange={this.handleChange}
-              >
-                <option value="">None</option>
-                <option value="YNG">16-25</option>
-                <option value="SRN">Senior</option>
-              </select>
-            </label>
-            <input type="submit" value="Submit" />
-          </form>
+          <div id="form">
+            <form onSubmit={this.handleSubmit}>
+              <div className="col">
+                <label htmlFor="start">Start Station:</label>
+                <input
+                  id = "start"
+                  name="start"
+                  type="text"
+                  value={this.state.start}
+                  onChange={this.handleChange}
+                />
+              </div>
+              <div className="col">
+                <label htmlFor="end">End Station:</label>
+                <input
+                  name="end"
+                  id="end"
+                  type="text"
+                  value={this.state.end}
+                  onChange={this.handleChange}
+                />
+              </div>
+              <div className="col">
+                <label htmlFor="date">Date:</label>
+                <input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={this.state.date}
+                  onChange={this.handleChange}
+                />
+              </div>
+              <div className="col">
+                <label htmlFor="time">Time:</label>
+                <input
+                  id="time"
+                  name="time"
+                  type="time"
+                  value={this.state.time}
+                  onChange={this.handleChange}
+                />
+              </div>
+              <div className="col">
+                <label htmlFor="railcard">Railcard:</label>
+                <select
+                  id="railcard"
+                  name="railcard"
+                  value={this.state.railcard}
+                  onChange={this.handleChange}
+                >
+                  <option value="">None</option>
+                  <option value="YNG">16-25</option>
+                  <option value="SRN">Senior</option>
+                </select>
+            </div>
+            <div className="col">
+              <input type="submit" value="Submit" />
+            </div>
+            </form>
+          </div>
           <div id="results">
+            {this.renderResults()}
           </div>
           <div>
             <h5>Recents</h5>

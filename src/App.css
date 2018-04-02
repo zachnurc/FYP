@@ -13,7 +13,20 @@ div{
   margin: 10px;
 }
 
+.col {
+
+}
+
+#results td{
+  border: 1px solid black;
+}
+
+.col input{
+
+}
+
 form{
+  max-width: 40%;
   background: #607D8B;
   border-radius: 5px;
   border: 0px solid;
