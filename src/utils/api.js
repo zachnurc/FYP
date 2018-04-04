@@ -7,15 +7,14 @@ export function getService(start, end, date, time){
     if(response.data.error){
       throw new Error('api error')
     }
-    return response.data.departures.all[0].service
+    return response.data.departures.all[0].service_timetable.id
   }).catch((error)=>{
-    console.error('api error ', error)
+    console.error('api error ', error, start, end)
     return error
   })
 }
 
-export function getStations(serviceID){
-  const url = `https://transportapi.com/v3/uk/train/service/${serviceID}/timetable.json?app_id=${APP_ID}&app_key=${APP_KEY}`
+export function getStations(url){
   return get(url).then((response)=>{
     if(response.data.error){
       throw new Error('api error')
@@ -56,9 +55,9 @@ export function getStationPlace(stationCode){
 export function getRoute(startLat, startLong, endLat, endLong, date, time){
   var url;
   if (date == null && time == null){
-    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}.json?app_id=${APP_ID}&app_key=${APP_KEY}&modes=train`
+    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}.json?app_id=${APP_ID}&app_key=${APP_KEY}&not_modes=bus`
   } else {
-    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&modes=train`
+    url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&not_modes=bus`
   }
   return get(url).then((response)=>{
     if(response.data.error){

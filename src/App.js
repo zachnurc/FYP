@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
-import { getService, getStations, getFare, getStationPlace, getRoute } from './utils/api'
+import { getService, getStations, getFare, getStationPlace, getRoute } from './utils/api';
+import placeTable from './utils/station_codes';
 
 let distance = [];
 
@@ -14,7 +15,8 @@ class App extends Component {
       journey_type: ` S`,
       ticket_type: `anytime`,
       railcard: ``,
-      cost: ``
+      cost: ``,
+      state: ``
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -39,24 +41,26 @@ class App extends Component {
 
   async splitSingleTrip(start,end,date,time){
 
-    var serviceID
+    var serviceURL
     var stops = []
     distance = []
     var endTime
 
     if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
-        serviceID = data
+        serviceURL = data
       })
     } else {
       await getService(start, end, date, time).then(data=>{
-        serviceID = data
+        serviceURL = data
       })
     }
 
-    await getStations(serviceID).then(data=>{
+
+    await getStations(serviceURL).then(data=>{
       stops = data
     })
+
 
     var startpos
     var endpos
@@ -81,21 +85,22 @@ class App extends Component {
     }
 
     stops = stops.slice(startpos, endpos+1)
-
+    date = stops[stops.length-1].aimed_departure_date
     endTime = stops[stops.length-1].aimed_arrival_time
 
-    return [stops, endTime]
+    return [stops, endTime, date]
 
   }
 
   async calculateFares(stops){
 
     if(this.isDateWeekend()){
-      this.state.ticket_type = `offpeak`
+      this.state.ticket_type = `off-peak`
     } else {
       this.state.ticket_type = `anytime`
     }
 
+    var ticket_type = this.state.ticket_type
     var fare = []
     var fareData = []
     var start = stops[0]
@@ -111,7 +116,6 @@ class App extends Component {
             return { ticket, fare }
           })
 
-          //filter needs to check if index contains not equals
 
           const filterItems = (query) => {
             return fare.filter((e) =>
@@ -124,20 +128,20 @@ class App extends Component {
           //also moron this doesnt't work properly
           //this falls to catch on first fail
           //the else statement here probably needs looking at again
-          if(this.state.ticket_type === `offpeak`){
+          if(this.state.ticket_type === `off-peak`){
             try {
               fare = filterItems(this.state.journey_type)
-              fare = filterItems(this.state.ticket_type)
+              fare = filterItems(ticket_type)
               distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
             }
             catch(err) {
               fare = fareCopy
-              this.state.ticket_type = `anytime`
+              ticket_type = "anytime"
               fare = filterItems(this.state.journey_type)
-              fare = filterItems(this.state.ticket_type)
+              fare = filterItems(ticket_type)
               var contains = false
               for(var counter=0; counter<distance.length; counter++){
-                if(distance[counter].includes(`${start}_${end}`)){
+                if(distance[counter].includes(`${stops[youter]}_${stops[yinner]}`)){
                   contains = true
                 }
               }
@@ -147,16 +151,23 @@ class App extends Component {
             }
           } else {
             fare = filterItems(this.state.journey_type)
-            fare = filterItems(this.state.ticket_type)
-            distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
-
+            fare = filterItems(ticket_type)
+            contains = false
+            for(counter=0; counter<distance.length; counter++){
+              if(distance[counter].includes(`${stops[youter]}_${stops[yinner]}`)){
+                contains = true
+              }
+            }
+            if (!contains){
+              distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
+            }
           }
         })
       }
     }
 
     const getDistance = (start, end) => {
-      for(var counter=0; counter<distance.length; counter++){
+      for(var counter = 0; counter < distance.length; counter++){
         if(distance[counter].includes(`${start}_${end}`)){
           var journey_part = counter
         }
@@ -199,6 +210,7 @@ class App extends Component {
 
   async handleSubmit(e) {
     //TODO
+    //Difference in location name and station name eg Loughborough != Loughborough (Leics)
     //offpeak support (check off-peak vs offpeak)
     //check super saver or other possible cheap ticket types
     //try catch for offpeak needs fixing
@@ -207,130 +219,139 @@ class App extends Component {
 
     e.preventDefault()
 
+    var status = this.state.status
+
     console.log('submit');
 
-    const placeTable = {
-      "Loughborough": "LBO",
-      "Loughborough (Leics)": "LBO",
-      "Derby": "DBY",
-      "Beeston": "BEE",
-      "Exeter St Davids": "EXD",
-      "Birmingham New Street": "BHM",
-      "Leicester": "LEI"
-    }
+    //add input error checks here
 
-    var startLocationLat
-    var startLocationLong
-    var endLocationLat
-    var endLocationLong
-    var startCode = this.state.start
-    var endCode = this.state.end
+    if(!(status === "loading")){
 
-    if(this.state.start.length !== 3){
-      startCode = placeTable[this.state.start]
-    }
-    if(this.state.end.length !== 3){
-      endCode = placeTable[this.state.end]
-    }
+      this.setState({status:"loading"})
 
-    //get location of start Station
-    await getStationPlace(startCode).then(data=>{
-      //loop through data to find right station code
-      for(var options = 0; options < data.length; options++){
-        if(data[options].station_code === startCode){
-          startLocationLat = data[options].latitude
-          startLocationLong = data[options].longitude
+      var startLocationLat
+      var startLocationLong
+      var endLocationLat
+      var endLocationLong
+      var startCode = this.state.start
+      var endCode = this.state.end
+
+      if(this.state.start.length !== 3){
+        startCode = placeTable[this.state.start]
+      }
+      if(this.state.end.length !== 3){
+        endCode = placeTable[this.state.end]
+      }
+
+      console.log(startCode, endCode)
+
+      //get location of start Station
+      await getStationPlace(startCode).then(data=>{
+        //loop through data to find right station code
+        for(var options = 0; options < data.length; options++){
+          if(data[options].station_code === startCode){
+            startLocationLat = data[options].latitude
+            startLocationLong = data[options].longitude
+          }
+        }
+      })
+
+      await getStationPlace(endCode).then(data=>{
+        for(var options = 0; options < data.length; options++){
+          if(data[options].station_code === endCode){
+            endLocationLat = data[options].latitude
+            endLocationLong = data[options].longitude
+          }
+        }
+      })
+
+      var route = []
+      var routeTemp
+      var date = this.state.date;
+      var time = this.state.time;
+
+      await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
+        routeTemp = data[0].route_parts
+        for(counter = 0; counter < routeTemp.length; counter++){
+          if(routeTemp[counter].mode === "train"){
+            route.push(routeTemp[counter])
+          }
+        }
+        //potentially check which route arrives first
+      })
+
+      routeTemp = route.map(data => {
+        const start = data.from_point_name
+        const end = data.to_point_name
+        return { start, end }
+      })
+
+      route = routeTemp
+
+      var startStation
+      var endStation
+      date = this.state.date
+      time = this.state.time
+      var stops = []
+
+      console.log(route)
+
+      for(var counter = 0; counter < route.length; counter++){
+        startStation = placeTable[route[counter].start]
+        endStation = placeTable[route[counter].end]
+        var temp = await this.splitSingleTrip(startStation, endStation, date, time)
+        time = temp[1]
+        date = temp[2]
+        for(var i = 0; i < temp[0].length; i++){
+          if(stops.indexOf(temp[0][i]) === -1){
+            stops.push(temp[0][i]);
+          }
         }
       }
-    })
 
-    await getStationPlace(endCode).then(data=>{
-      for(var options = 0; options < data.length; options++){
-        if(data[options].station_code === endCode){
-          endLocationLat = data[options].latitude
-          endLocationLong = data[options].longitude
-        }
-      }
-    })
+      console.log(stops)
 
-    var route
+      var cost = await this.calculateFares(stops)
+      cost = cost/100
 
-    var date = this.state.date;
-    var time = this.state.time;
+      this.setState({cost:cost})
+      this.setState({status: "complete"})
 
-    await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
-      route = data[0].route_parts
-      route.splice(0,1)
-      route.splice(route.length-1,1)
-      //potentially check which route arrives first
-    })
+      console.log(this.state.cost)
+      console.log("done")
 
-    var routeTemp
-
-    routeTemp = route.map(data => {
-      const start = data.from_point_name
-      const end = data.to_point_name
-      return { start, end }
-    })
-
-    route = routeTemp
-
-    var startStation
-    var endStation
-    date = this.state.date
-    time = this.state.time
-    var stops = []
-
-    console.log(route)
-
-    for(var counter = 0; counter < route.length; counter++){
-      startStation = placeTable[route[counter].start]
-      endStation = placeTable[route[counter].end]
-      var temp = await this.splitSingleTrip(startStation, endStation, date, time)
-      time = temp[1]
-      for(var i = 0; i < temp[0].length; i++){
-        stops.push(temp[0][i]);
-      }
     }
-
-    var cost = await this.calculateFares(stops)
-    cost = cost/100
-
-    this.setState({cost:cost})
-
-    console.log(this.state.cost)
-    console.log("done")
-
-    //works for a single train journey
-
-    //extract start and end locations in a usable form from route
-    //create lookup table for place names to 3 letter acronyms
-    //calculate first train, save end time for first train
-    //use end time of first train as start time for second train
-    //do for all parts of route
 
   }
 
   renderResults(){
 
-    return (
-      <table>
-        <thead>
-          <tr>
-            <td>Start Station</td>
-            <td>End Station</td>
-            <td>Cost</td>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{this.state.start}</td>
-            <td>{this.state.end}</td>
-            <td>{this.state.cost}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
+    if (this.state.status === "complete"){
+      return (
+        <table>
+          <thead>
+            <tr>
+              <td>Start Station</td>
+              <td>End Station</td>
+              <td>Cost</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{this.state.start}</td>
+              <td>{this.state.end}</td>
+              <td>{this.state.cost}</td>
+            </tr>
+          </tbody>
+        </table>
+      );
+    } else if(this.state.status === "loading"){
+      return (
+        <h3>Loading...</h3>
+      );
+    } else {
+      return null
+    }
 
   }
 
