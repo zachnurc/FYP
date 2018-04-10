@@ -16,7 +16,11 @@ class App extends Component {
       ticket_type: `anytime`,
       railcard: ``,
       cost: ``,
-      state: ``
+      state: ``,
+      startError: ``,
+      endError: ``,
+      timeError: ``,
+      dateError: ``
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -25,18 +29,6 @@ class App extends Component {
 
   handleChange(e) {
     this.setState({ [e.target.name]: e.target.value })
-  }
-
-  isDateWeekend(){
-    if(this.state.date === undefined) return false
-    var year = this.state.date.split(`-`)[0]
-    var month = this.state.date.split(`-`)[1]
-    var day = this.state.date.split(`-`)[2]
-    var myDate = new Date(year, month-1, day)
-    if(myDate.getDay() === 6 || myDate.getDay() === 0) {
-      return true
-    }
-    return false
   }
 
   async splitSingleTrip(start,end,date,time){
@@ -94,12 +86,6 @@ class App extends Component {
 
   async calculateFares(stops){
 
-    if(this.isDateWeekend()){
-      this.state.ticket_type = `off-peak`
-    } else {
-      this.state.ticket_type = `anytime`
-    }
-
     var ticket_type = this.state.ticket_type
     var fare = []
     var fareData = []
@@ -153,7 +139,7 @@ class App extends Component {
             fare = filterItems(this.state.journey_type)
             fare = filterItems(ticket_type)
             contains = false
-            for(counter=0; counter<distance.length; counter++){
+            for(counter = 0; counter < distance.length; counter++){
               if(distance[counter].includes(`${stops[youter]}_${stops[yinner]}`)){
                 contains = true
               }
@@ -181,6 +167,7 @@ class App extends Component {
       }
     }
 
+    //redo this as i don't fully understand Henry's algorithm
 
     const allCombinsFrom = stat1 => {
 
@@ -200,7 +187,10 @@ class App extends Component {
       return smallest
     }
 
+
     const result = allCombinsFrom(start)
+
+    console.log(result)
 
     var cost = result.cost
     return parseInt(cost)
@@ -225,22 +215,29 @@ class App extends Component {
 
     //add input error checks here
 
-    if(!(status === "loading")){
+    if(!(status === "loading" || status === "calculatingFares" || status === "calculatingRoute")){
 
-      this.setState({status:"loading"})
+      this.setState({status:"calculatingRoute"})
 
       var startLocationLat
       var startLocationLong
       var endLocationLat
       var endLocationLong
-      var startCode = this.state.start
-      var endCode = this.state.end
+      var startCode = ""
+      var endCode = ""
 
       if(this.state.start.length !== 3){
         startCode = placeTable[this.state.start]
       }
       if(this.state.end.length !== 3){
         endCode = placeTable[this.state.end]
+      }
+
+      if(startCode === undefined){
+        this.setState({startError:"Not a valid station"})
+      }
+      if(endCode === undefined){
+        this.setState({endError:"Not a valid station"})
       }
 
       console.log(startCode, endCode)
@@ -270,58 +267,85 @@ class App extends Component {
       var date = this.state.date;
       var time = this.state.time;
 
-      await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
-        routeTemp = data[0].route_parts
-        for(counter = 0; counter < routeTemp.length; counter++){
-          if(routeTemp[counter].mode === "train"){
-            route.push(routeTemp[counter])
+
+      try {
+        this.setState({status:"calculatingRoute"})
+        await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
+          routeTemp = data.routes[0].route_parts
+          if(date === undefined){
+            date = data.request_time
+            date = date.slice(0,10)
+          }
+          for(counter = 0; counter < routeTemp.length; counter++){
+            if(routeTemp[counter].mode === "train"){
+              route.push(routeTemp[counter])
+            }
+          }
+          if(time === undefined){
+            time = route[0].departure_time
+          }
+          //potentially check which route arrives first
+        })
+
+        var tempTime = time.split(":")
+        var tempDate = date.split("-")
+        var longDate = new Date(tempDate[0], tempDate[1], tempDate[2], tempTime[0], tempTime[1])
+
+        if(longDate.getDay() === 6 || longDate.getDay() === 0){
+          this.state.ticket_type = `off-peak`
+        } else if(longDate.getHours() < 10){
+          this.state.ticket_type = `anytime`
+        } else if(longDate.getHours() > 16 && date.getHours() < 19){
+          this.state.ticket_type = `anytime`
+        } else {
+          this.state.ticket_type = `off-peak`
+        }
+
+        routeTemp = route.map(data => {
+          const start = data.from_point_name
+          const end = data.to_point_name
+          return { start, end }
+        })
+
+        route = routeTemp
+
+        var startStation
+        var endStation
+        date = this.state.date
+        time = this.state.time
+        var stops = []
+
+        console.log(route)
+
+        for(var counter = 0; counter < route.length; counter++){
+          startStation = placeTable[route[counter].start]
+          endStation = placeTable[route[counter].end]
+          var temp = await this.splitSingleTrip(startStation, endStation, date, time)
+          time = temp[1]
+          date = temp[2]
+          for(var i = 0; i < temp[0].length; i++){
+            if(stops.indexOf(temp[0][i]) === -1){
+              stops.push(temp[0][i]);
+            }
           }
         }
-        //potentially check which route arrives first
-      })
 
-      routeTemp = route.map(data => {
-        const start = data.from_point_name
-        const end = data.to_point_name
-        return { start, end }
-      })
+        console.log(stops)
 
-      route = routeTemp
+        this.setState({status:"calculatingFares"})
 
-      var startStation
-      var endStation
-      date = this.state.date
-      time = this.state.time
-      var stops = []
+        var cost = await this.calculateFares(stops)
+        cost = cost/100
 
-      console.log(route)
+        this.setState({cost:cost})
+        this.setState({status: "complete"})
 
-      for(var counter = 0; counter < route.length; counter++){
-        startStation = placeTable[route[counter].start]
-        endStation = placeTable[route[counter].end]
-        var temp = await this.splitSingleTrip(startStation, endStation, date, time)
-        time = temp[1]
-        date = temp[2]
-        for(var i = 0; i < temp[0].length; i++){
-          if(stops.indexOf(temp[0][i]) === -1){
-            stops.push(temp[0][i]);
-          }
-        }
+        console.log("done")
+
+      } catch(error) {
+        this.setState({status: "error"})
       }
-
-      console.log(stops)
-
-      var cost = await this.calculateFares(stops)
-      cost = cost/100
-
-      this.setState({cost:cost})
-      this.setState({status: "complete"})
-
-      console.log(this.state.cost)
-      console.log("done")
-
     }
-
   }
 
   renderResults(){
@@ -349,6 +373,18 @@ class App extends Component {
       return (
         <h3>Loading...</h3>
       );
+    } else if(this.state.status === "calculatingRoute"){
+      return(
+        <h3>Calculating Route...</h3>
+      );
+    } else if(this.state.status === "calculatingFares"){
+      return(
+        <h3>Calculating Fares...</h3>
+      )
+    } else if(this.state.status === "error") {
+      return (
+        <h3>An error has occured, please try again later or contact Zach</h3>
+      );
     } else {
       return null
     }
@@ -370,6 +406,7 @@ class App extends Component {
                   value={this.state.start}
                   onChange={this.handleChange}
                 />
+                <p>{this.state.startError}</p>
               </div>
               <div className="col">
                 <label htmlFor="end">End Station:</label>
@@ -380,6 +417,7 @@ class App extends Component {
                   value={this.state.end}
                   onChange={this.handleChange}
                 />
+                <p>{this.state.endError}</p>
               </div>
               <div className="col">
                 <label htmlFor="date">Date:</label>
@@ -390,6 +428,7 @@ class App extends Component {
                   value={this.state.date}
                   onChange={this.handleChange}
                 />
+                <p>{this.state.dateError}</p>
               </div>
               <div className="col">
                 <label htmlFor="time">Time:</label>
@@ -400,6 +439,7 @@ class App extends Component {
                   value={this.state.time}
                   onChange={this.handleChange}
                 />
+                <p>{this.state.timeError}</p>
               </div>
               <div className="col">
                 <label htmlFor="railcard">Railcard:</label>

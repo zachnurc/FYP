@@ -14,7 +14,13 @@ div{
 }
 
 .col {
+  display: flex;
+  height: 22px;
+}
 
+form p{
+  color: red;
+  margin: auto;
 }
 
 #results td{

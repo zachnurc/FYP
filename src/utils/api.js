@@ -63,7 +63,7 @@ export function getRoute(startLat, startLong, endLat, endLong, date, time){
     if(response.data.error){
       throw new Error('api error')
     }
-    return response.data.routes
+    return response.data
   }).catch((error)=>{
     console.error('api error ', error)
     return error
