@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import './App.css';
 import { getService, getStations, getFare, getStationPlace, getRoute } from './utils/api';
 import placeTable from './utils/station_codes';
+import AutoComplete from './autosuggest.js';
 
 let distance = [];
-let test = ["Test", "Test2"];
 
 class App extends Component {
 
@@ -13,15 +13,14 @@ class App extends Component {
     this.state = {
       start: ``,
       end: ``,
-      journey_type: ` S`,
       ticket_type: `anytime`,
       railcard: ``,
-      cost: ``,
+      result: ``,
       state: ``,
       startError: ``,
       endError: ``,
       timeError: ``,
-      dateError: ``
+      dateError: ``,
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -32,108 +31,14 @@ class App extends Component {
     this.setState({ [e.target.name]: e.target.value })
   }
 
-  autocomplete(inp, arr) {
-    /*the autocomplete function takes two arguments,
-    the text field element and an array of possible autocompleted values:*/
-    var currentFocus
-    /*execute a function when someone writes in the text field:*/
-    inp.addEventListener("input", function(e) {
-      var a, b, i, val = this.value;
-      /*close any already open lists of autocompleted values*/
-      closeAllLists()
-      if (!val) { return false}
-      currentFocus = -1
-      /*create a DIV element that will contain the items (values):*/
-      a = document.createElement("DIV")
-      a.setAttribute("id", this.id + "autocomplete-list")
-      a.setAttribute("class", "autocomplete-items")
-      /*append the DIV element as a child of the autocomplete container:*/
-      this.parentNode.appendChild(a)
-      /*for each item in the array...*/
-      for (i = 0; i < arr.length; i++) {
-        /*check if the item starts with the same letters as the text field value:*/
-        if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
-          /*create a DIV element for each matching element:*/
-          b = document.createElement("DIV")
-          /*make the matching letters bold:*/
-          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>"
-          b.innerHTML += arr[i].substr(val.length)
-          /*insert a input field that will hold the current array item's value:*/
-          b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>"
-          /*execute a function when someone clicks on the item value (DIV element):*/
-            b.addEventListener("click", function(e) {
-              /*insert the value for the autocomplete text field:*/
-              inp.value = this.getElementsByTagName("input")[0].value
-              /*close the list of autocompleted values,
-              (or any other open lists of autocompleted values:*/
-              closeAllLists()
-            });
-          a.appendChild(b)
-        }
-      }
-    });
-    /*execute a function presses a key on the keyboard:*/
-    inp.addEventListener("keydown", function(e) {
-      var x = document.getElementById(this.id + "autocomplete-list")
-      if (x) x = x.getElementsByTagName("div")
-      if (e.keyCode == 40) {
-        /*If the arrow DOWN key is pressed,
-        increase the currentFocus variable:*/
-        currentFocus++
-        /*and and make the current item more visible:*/
-        addActive(x)
-      } else if (e.keyCode == 38) { //up
-        /*If the arrow UP key is pressed,
-        decrease the currentFocus variable:*/
-        currentFocus--
-        /*and and make the current item more visible:*/
-        addActive(x)
-      } else if (e.keyCode == 13) {
-        /*If the ENTER key is pressed, prevent the form from being submitted,*/
-        e.preventDefault()
-        if (currentFocus > -1) {
-          /*and simulate a click on the "active" item:*/
-          if (x) x[currentFocus].click()
-        }
-      }
-    });
-
-    function closeAllLists(elmnt) {
-      /*close all autocomplete lists in the document,
-      except the one passed as an argument:*/
-      var x = document.getElementsByClassName("autocomplete-items")
-      for (var i = 0; i < x.length; i++) {
-        if (elmnt != x[i] && elmnt != inp) {
-          x[i].parentNode.removeChild(x[i])
-        }
-      }
-    }
-
-    function addActive(x) {
-      /*a function to classify an item as "active":*/
-      if (!x) return false
-      /*start by removing the "active" class on all items:*/
-      removeActive(x)
-      if (currentFocus >= x.length) currentFocus = 0
-      if (currentFocus < 0) currentFocus = (x.length - 1)
-      /*add class "autocomplete-active":*/
-      x[currentFocus].classList.add("autocomplete-active")
-    }
-
-    function removeActive(x) {
-      /*a function to remove the "active" class from all autocomplete items:*/
-      for (var i = 0; i < x.length; i++) {
-        x[i].classList.remove("autocomplete-active")
-      }
-    }
-  }
-
   async splitSingleTrip(start,end,date,time){
 
     var serviceURL
     var stops = []
     distance = []
     var endTime
+
+    console.log(start,end)
 
     if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
@@ -187,7 +92,6 @@ class App extends Component {
     var fare = []
     var fareData = []
     var start = stops[0]
-    var end = stops[stops.length-1]
 
     for(var youter = 0; youter < stops.length-1; youter++) {
       for(var yinner = youter+1; yinner < stops.length; yinner++){
@@ -199,6 +103,7 @@ class App extends Component {
             return { ticket, fare }
           })
 
+          console.log(fare)
 
           const filterItems = (query) => {
             return fare.filter((e) =>
@@ -211,43 +116,27 @@ class App extends Component {
           //also moron this doesnt't work properly
           //this falls to catch on first fail
           //the else statement here probably needs looking at again
-          if(this.state.ticket_type === `off-peak`){
+          if(this.state.ticket_type === `off-peak s`){
             try {
-              fare = filterItems(this.state.journey_type)
               fare = filterItems(ticket_type)
               distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
             }
             catch(err) {
               fare = fareCopy
-              ticket_type = "anytime"
-              fare = filterItems(this.state.journey_type)
+              ticket_type = "anytime day s"
               fare = filterItems(ticket_type)
-              var contains = false
-              for(var counter=0; counter<distance.length; counter++){
-                if(distance[counter].includes(`${stops[youter]}_${stops[yinner]}`)){
-                  contains = true
-                }
-              }
-              if(!contains){
-                distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
-              }
-            }
-          } else {
-            fare = filterItems(this.state.journey_type)
-            fare = filterItems(ticket_type)
-            contains = false
-            for(counter = 0; counter < distance.length; counter++){
-              if(distance[counter].includes(`${stops[youter]}_${stops[yinner]}`)){
-                contains = true
-              }
-            }
-            if (!contains){
               distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
             }
+          } else {
+            ticket_type = "anytime day s"
+            fare = filterItems(ticket_type)
+            distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
           }
         })
       }
     }
+
+    console.log(distance)
 
     const getDistance = (start, end) => {
       for(var counter = 0; counter < distance.length; counter++){
@@ -287,29 +176,27 @@ class App extends Component {
 
     const result = allCombinsFrom(start)
 
-    console.log(result)
+    result.cost = result.cost/100
 
-    var cost = result.cost
-    return parseInt(cost)
+    for (var i = 0; i < result.journey.length; i++){
+      result.journey[i] = placeTable[placeTable.findIndex(x => x.code===result.journey[i])].name
+    }
+
+    return result
 
   }
 
   async handleSubmit(e) {
     //TODO
-    //Difference in location name and station name eg Loughborough != Loughborough (Leics)
     //offpeak support (check off-peak vs offpeak)
     //check super saver or other possible cheap ticket types
-    //try catch for offpeak needs fixing
-    //save favourites
-    //show recents
+    //input error checks
 
     e.preventDefault()
 
     var status = this.state.status
 
     console.log('submit');
-
-    //add input error checks here
 
     if(!(status === "loading" || status === "calculatingFares" || status === "calculatingRoute")){
 
@@ -322,12 +209,12 @@ class App extends Component {
       var startCode = ""
       var endCode = ""
 
-      if(this.state.start.length !== 3){
-        startCode = placeTable[this.state.start]
-      }
-      if(this.state.end.length !== 3){
-        endCode = placeTable[this.state.end]
-      }
+      var index = placeTable.findIndex(x => x.name===this.state.start);
+      startCode = placeTable[index].code
+
+
+      index = placeTable.findIndex(x => x.name===this.state.end);
+      endCode = placeTable[index].code
 
       if(startCode === undefined){
         this.setState({startError:"Not a valid station"})
@@ -335,8 +222,6 @@ class App extends Component {
       if(endCode === undefined){
         this.setState({endError:"Not a valid station"})
       }
-
-      console.log(startCode, endCode)
 
       //get location of start Station
       await getStationPlace(startCode).then(data=>{
@@ -349,6 +234,18 @@ class App extends Component {
         }
       })
 
+      if(startLocationLat === undefined){
+        await getStationPlace(this.state.start).then(data=>{
+          //loop through data to find right station code
+          for(var options = 0; options < data.length; options++){
+            if(data[options].station_code === startCode){
+              startLocationLat = data[options].latitude
+              startLocationLong = data[options].longitude
+            }
+          }
+        })
+      }
+
       await getStationPlace(endCode).then(data=>{
         for(var options = 0; options < data.length; options++){
           if(data[options].station_code === endCode){
@@ -357,6 +254,18 @@ class App extends Component {
           }
         }
       })
+
+      if (endLocationLat === undefined){
+        await getStationPlace(this.state.end).then(data=>{
+          for(var options = 0; options < data.length; options++){
+            if(data[options].station_code === endCode){
+              endLocationLat = data[options].latitude
+              endLocationLong = data[options].longitude
+            }
+          }
+        })
+      }
+
 
       var route = []
       var routeTemp
@@ -388,13 +297,13 @@ class App extends Component {
         var longDate = new Date(tempDate[0], tempDate[1], tempDate[2], tempTime[0], tempTime[1])
 
         if(longDate.getDay() === 6 || longDate.getDay() === 0){
-          this.state.ticket_type = `off-peak`
+          this.state.ticket_type = `off-peak s`
         } else if(longDate.getHours() < 10){
-          this.state.ticket_type = `anytime`
+          this.state.ticket_type = `anytime day s`
         } else if(longDate.getHours() > 16 && date.getHours() < 19){
-          this.state.ticket_type = `anytime`
+          this.state.ticket_type = `anytime day s`
         } else {
-          this.state.ticket_type = `off-peak`
+          this.state.ticket_type = `off-peak s`
         }
 
         routeTemp = route.map(data => {
@@ -414,8 +323,8 @@ class App extends Component {
         console.log(route)
 
         for(var counter = 0; counter < route.length; counter++){
-          startStation = placeTable[route[counter].start]
-          endStation = placeTable[route[counter].end]
+          endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
+          startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
           var temp = await this.splitSingleTrip(startStation, endStation, date, time)
           time = temp[1]
           date = temp[2]
@@ -426,19 +335,19 @@ class App extends Component {
           }
         }
 
-        console.log(stops)
-
         this.setState({status:"calculatingFares"})
 
-        var cost = await this.calculateFares(stops)
-        cost = cost/100
+        console.log(stops)
 
-        this.setState({cost:cost})
+        var result = await this.calculateFares(stops)
+
+        this.setState({result:result})
         this.setState({status: "complete"})
 
         console.log("done")
 
       } catch(error) {
+        console.log(error)
         this.setState({status: "error"})
       }
     }
@@ -447,22 +356,32 @@ class App extends Component {
   renderResults(){
 
     if (this.state.status === "complete"){
+      const Body = ({stations}) => (
+        <tbody>
+          <tr>
+            {stations.map((station, i) => (
+              <td key={i}>{station}</td>
+            ))}
+            <td>{this.state.result.cost}</td>
+          </tr>
+        </tbody>
+      );
+
+      const Head = ({stations}) => (
+        <thead>
+          <tr>
+            {stations.map((station, i) => (
+              <th key={i}>Station {i}</th>
+            ))}
+            <th>Cost</th>
+          </tr>
+        </thead>
+      );
+
       return (
         <table>
-          <thead>
-            <tr>
-              <td>Start Station</td>
-              <td>End Station</td>
-              <td>Cost</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{this.state.start}</td>
-              <td>{this.state.end}</td>
-              <td>{this.state.cost}</td>
-            </tr>
-          </tbody>
+          <Head stations={this.state.result.journey}/>
+          <Body stations={this.state.result.journey}/>
         </table>
       );
     } else if(this.state.status === "loading"){
@@ -487,38 +406,29 @@ class App extends Component {
 
   }
 
-  ComponentDidMount(){
-    this.autocomplete(document.getElementById("start"), test)
-    this.autocomplete(document.getElementById("end"), test)
-  }
-
   render() {
     return (
       <div className="App">
         <div className="inner">
-          <div id="form" autocomplete="off">
+          <div id="form">
             <form onSubmit={this.handleSubmit}>
-              <div className="col autocomplete">
-                <label htmlFor="start">Start Station:</label>
-                <input
-                  id = "start"
-                  name="start"
-                  type="text"
-                  value={this.state.start}
-                  onChange={this.handleChange}
-                />
-                <p>{this.state.startError}</p>
-              </div>
-              <div className="col autocomplete">
-                <label htmlFor="end">End Station:</label>
-                <input
-                  name="end"
-                  id="end"
-                  type="text"
-                  value={this.state.end}
-                  onChange={this.handleChange}
-                />
-                <p>{this.state.endError}</p>
+              <div className="col">
+                <label htmlFor="start">From:</label>
+                <AutoComplete
+                   id="start"
+                   name="start"
+                   placeholder="Start Station"
+                   value={this.state.start}
+                   onChange={this.handleChange}
+                 />
+                <label htmlFor="end">To:</label>
+                <AutoComplete
+                   id="end"
+                   name="end"
+                   placeholder="End Station"
+                   value={this.state.end}
+                   onChange={this.handleChange}
+                 />
               </div>
               <div className="col">
                 <label htmlFor="date">Date:</label>
@@ -562,12 +472,6 @@ class App extends Component {
           </div>
           <div id="results">
             {this.renderResults()}
-          </div>
-          <div>
-            <h5>Recents</h5>
-          </div>
-          <div>
-            <h5>Favourites</h5>
           </div>
         </div>
       </div>

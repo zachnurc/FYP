@@ -1,0 +1,58 @@
+.react-autosuggest__container
+{
+    position: relative;
+    margin: 0;
+}
+
+.react-autosuggest__input
+{
+  align-items: center;
+  margin-right: 20px;
+}
+
+.react-autosuggest__input--focused
+{
+
+}
+
+.react-autosuggest__input--open
+{
+
+}
+
+.react-autosuggest__suggestions-container
+{
+  width: 100%;
+  z-index: 2;
+}
+
+.react-autosuggest__suggestions-container--open
+{
+  display: block;
+  position: absolute;
+  width: 100%;
+  background-color: white;
+  margin: 0;
+  z-index: 2;
+}
+
+.react-autosuggest__suggestions-list
+{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.react-autosuggest__suggestion
+{
+  color: black;
+  font-size: 0.9rem;
+  font-family: arial;
+  cursor: pointer;
+  padding: 10px 20px;
+}
+
+.react-autosuggest__suggestion--highlighted
+{
+    background-color: blue;
+}
