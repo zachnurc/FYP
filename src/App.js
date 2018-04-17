@@ -21,6 +21,7 @@ class App extends Component {
       endError: ``,
       timeError: ``,
       dateError: ``,
+      cost: ``
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -37,8 +38,6 @@ class App extends Component {
     var stops = []
     distance = []
     var endTime
-
-    console.log(start,end)
 
     if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
@@ -103,8 +102,6 @@ class App extends Component {
             return { ticket, fare }
           })
 
-          console.log(fare)
-
           const filterItems = (query) => {
             return fare.filter((e) =>
               e.ticket.toLowerCase().indexOf(query.toLowerCase()) > -1
@@ -119,24 +116,42 @@ class App extends Component {
           if(this.state.ticket_type === `off-peak s`){
             try {
               fare = filterItems(ticket_type)
-              distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
+              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
             }
             catch(err) {
-              fare = fareCopy
-              ticket_type = "anytime day s"
-              fare = filterItems(ticket_type)
-              distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
+              try {
+                fare = fareCopy
+                ticket_type = "anytime day s"
+                fare = filterItems(ticket_type)
+                distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+                ticket_type = "off-peak s"
+              }
+              catch(error){
+                fare = fareCopy
+                ticket_type = "anytime s"
+                fare = filterItems(ticket_type)
+                distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+                ticket_type = "off-peak s"
+              }
             }
           } else {
-            ticket_type = "anytime day s"
-            fare = filterItems(ticket_type)
-            distance.push (`${stops[youter]}_${stops[yinner]} :${fare[0].fare}`)
+            try {
+              ticket_type = "anytime day s"
+              fare = filterItems(ticket_type)
+              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+              ticket_type = "off-peak s"
+            }
+            catch(error){
+              fare = fareCopy
+              ticket_type = "anytime s"
+              fare = filterItems(ticket_type)
+              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+              ticket_type = "off-peak s"
+            }
           }
         })
       }
     }
-
-    console.log(distance)
 
     const getDistance = (start, end) => {
       for(var counter = 0; counter < distance.length; counter++){
@@ -152,8 +167,6 @@ class App extends Component {
         return Infinity
       }
     }
-
-    //redo this as i don't fully understand Henry's algorithm
 
     const allCombinsFrom = stat1 => {
 
@@ -174,13 +187,34 @@ class App extends Component {
     }
 
 
-    const result = allCombinsFrom(start)
+    var result = allCombinsFrom(start)
 
-    result.cost = result.cost/100
+    var temp = []
 
-    for (var i = 0; i < result.journey.length; i++){
-      result.journey[i] = placeTable[placeTable.findIndex(x => x.code===result.journey[i])].name
+    for(var i = 0; i < result.journey.length - 1; i++){
+      for(var x = 0; x < distance.length; x++){
+        if(distance[x].includes(`${result.journey[i]}_${result.journey[i+1]}`)){
+          temp.push(distance[x])
+        }
+      }
     }
+
+    result = temp.map(data => {
+      const start = placeTable[placeTable.findIndex(x => x.code===data.substring(0, data.indexOf("_")))].name
+      const end = placeTable[placeTable.findIndex(x => x.code===data.substring(data.indexOf("_") + 1, data.indexOf(":")))].name
+      var cost = parseFloat(data.substring(data.indexOf(":") + 1, data.length - 1))/10
+      cost = cost.toFixed(2)
+      return { start, end, cost }
+    })
+
+    var cost = 0
+
+    for(i = 0; i < result.length; i++){
+      result[i].cost = parseFloat(result[i].cost)
+      cost += result[i].cost
+    }
+
+    this.setState({cost: cost})
 
     return result
 
@@ -195,8 +229,6 @@ class App extends Component {
     e.preventDefault()
 
     var status = this.state.status
-
-    console.log('submit');
 
     if(!(status === "loading" || status === "calculatingFares" || status === "calculatingRoute")){
 
@@ -320,8 +352,6 @@ class App extends Component {
         time = this.state.time
         var stops = []
 
-        console.log(route)
-
         for(var counter = 0; counter < route.length; counter++){
           endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
           startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
@@ -337,14 +367,10 @@ class App extends Component {
 
         this.setState({status:"calculatingFares"})
 
-        console.log(stops)
-
         var result = await this.calculateFares(stops)
 
         this.setState({result:result})
         this.setState({status: "complete"})
-
-        console.log("done")
 
       } catch(error) {
         console.log(error)
@@ -356,33 +382,34 @@ class App extends Component {
   renderResults(){
 
     if (this.state.status === "complete"){
-      const Body = ({stations}) => (
-        <tbody>
-          <tr>
-            {stations.map((station, i) => (
-              <td key={i}>{station}</td>
-            ))}
-            <td>{this.state.result.cost}</td>
-          </tr>
-        </tbody>
-      );
-
-      const Head = ({stations}) => (
-        <thead>
-          <tr>
-            {stations.map((station, i) => (
-              <th key={i}>Station {i}</th>
-            ))}
-            <th>Cost</th>
-          </tr>
-        </thead>
+      const Body = ({results}) => (
+        <table>
+          <thead>
+            <tr>
+              <th>Start Station</th>
+              <th>End Station</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+              {results.map((result, i) => (
+                <tr key={i}>
+                  <td key={i + result.start}>{result.start}</td>
+                  <td key={i + result.end}>{result.end}</td>
+                  <td key={i + result.cost}>{result.cost.toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr>
+                <td></td>
+                <td></td>
+                <td>{this.state.cost.toFixed(2)}</td>
+              </tr>
+          </tbody>
+        </table>
       );
 
       return (
-        <table>
-          <Head stations={this.state.result.journey}/>
-          <Body stations={this.state.result.journey}/>
-        </table>
+        <Body results={this.state.result}/>
       );
     } else if(this.state.status === "loading"){
       return (

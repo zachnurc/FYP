@@ -28,7 +28,6 @@ export function getStations(url){
 
 export function getFare(start, end, railcard){
   const url = `http://api.brfares.com/querysimple?orig=${start}&dest=${end}&rlc=${railcard}`
-  console.log(url)
   return get(url).then((response)=>{
     if(response.data.error){
       throw new Error('api error')
