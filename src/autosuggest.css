@@ -22,7 +22,6 @@
 
 .react-autosuggest__suggestions-container
 {
-  width: 100%;
   z-index: 2;
 }
 
@@ -30,7 +29,6 @@
 {
   display: block;
   position: absolute;
-  width: 100%;
   background-color: white;
   margin: 0;
   z-index: 2;
@@ -54,5 +52,5 @@
 
 .react-autosuggest__suggestion--highlighted
 {
-    background-color: blue;
+    background-color: #c1bcbc;
 }

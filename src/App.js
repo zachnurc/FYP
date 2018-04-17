@@ -17,8 +17,7 @@ class App extends Component {
       railcard: ``,
       result: ``,
       state: ``,
-      startError: ``,
-      endError: ``,
+      stationError: ``,
       timeError: ``,
       dateError: ``,
       cost: ``
@@ -222,7 +221,6 @@ class App extends Component {
 
   async handleSubmit(e) {
     //TODO
-    //offpeak support (check off-peak vs offpeak)
     //check super saver or other possible cheap ticket types
     //input error checks
 
@@ -241,140 +239,145 @@ class App extends Component {
       var startCode = ""
       var endCode = ""
 
-      var index = placeTable.findIndex(x => x.name===this.state.start);
-      startCode = placeTable[index].code
+      if(this.state.start === "" || this.state.end === ""){
+        this.setState({stationError:"Please enter a valid start and end station"})
+      } else {
 
+        try{
+          var index = placeTable.findIndex(x => x.name===this.state.start);
+          startCode = placeTable[index].code
 
-      index = placeTable.findIndex(x => x.name===this.state.end);
-      endCode = placeTable[index].code
+          console.log(startCode)
 
-      if(startCode === undefined){
-        this.setState({startError:"Not a valid station"})
-      }
-      if(endCode === undefined){
-        this.setState({endError:"Not a valid station"})
-      }
+          //get location of start Station
+          await getStationPlace(startCode).then(data=>{
+            //loop through data to find right station code
+            for(var options = 0; options < data.length; options++){
+              if(data[options].station_code === startCode){
+                startLocationLat = data[options].latitude
+                startLocationLong = data[options].longitude
+              }
+            }
+          })
 
-      //get location of start Station
-      await getStationPlace(startCode).then(data=>{
-        //loop through data to find right station code
-        for(var options = 0; options < data.length; options++){
-          if(data[options].station_code === startCode){
-            startLocationLat = data[options].latitude
-            startLocationLong = data[options].longitude
+          if(startLocationLat === undefined){
+            await getStationPlace(this.state.start).then(data=>{
+              //loop through data to find right station code
+              for(var options = 0; options < data.length; options++){
+                if(data[options].station_code === startCode){
+                  startLocationLat = data[options].latitude
+                  startLocationLong = data[options].longitude
+                }
+              }
+            })
+          }
+
+          index = placeTable.findIndex(x => x.name===this.state.end);
+          endCode = placeTable[index].code
+
+          await getStationPlace(endCode).then(data=>{
+            for(var options = 0; options < data.length; options++){
+              if(data[options].station_code === endCode){
+                endLocationLat = data[options].latitude
+                endLocationLong = data[options].longitude
+              }
+            }
+          })
+
+          if (endLocationLat === undefined){
+            await getStationPlace(this.state.end).then(data=>{
+              for(var options = 0; options < data.length; options++){
+                if(data[options].station_code === endCode){
+                  endLocationLat = data[options].latitude
+                  endLocationLong = data[options].longitude
+                }
+              }
+            })
           }
         }
-      })
-
-      if(startLocationLat === undefined){
-        await getStationPlace(this.state.start).then(data=>{
-          //loop through data to find right station code
-          for(var options = 0; options < data.length; options++){
-            if(data[options].station_code === startCode){
-              startLocationLat = data[options].latitude
-              startLocationLong = data[options].longitude
-            }
-          }
-        })
-      }
-
-      await getStationPlace(endCode).then(data=>{
-        for(var options = 0; options < data.length; options++){
-          if(data[options].station_code === endCode){
-            endLocationLat = data[options].latitude
-            endLocationLong = data[options].longitude
-          }
-        }
-      })
-
-      if (endLocationLat === undefined){
-        await getStationPlace(this.state.end).then(data=>{
-          for(var options = 0; options < data.length; options++){
-            if(data[options].station_code === endCode){
-              endLocationLat = data[options].latitude
-              endLocationLong = data[options].longitude
-            }
-          }
-        })
-      }
-
-
-      var route = []
-      var routeTemp
-      var date = this.state.date;
-      var time = this.state.time;
-
-
-      try {
-        this.setState({status:"calculatingRoute"})
-        await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
-          routeTemp = data.routes[0].route_parts
-          if(date === undefined){
-            date = data.request_time
-            date = date.slice(0,10)
-          }
-          for(counter = 0; counter < routeTemp.length; counter++){
-            if(routeTemp[counter].mode === "train"){
-              route.push(routeTemp[counter])
-            }
-          }
-          if(time === undefined){
-            time = route[0].departure_time
-          }
-          //potentially check which route arrives first
-        })
-
-        var tempTime = time.split(":")
-        var tempDate = date.split("-")
-        var longDate = new Date(tempDate[0], tempDate[1], tempDate[2], tempTime[0], tempTime[1])
-
-        if(longDate.getDay() === 6 || longDate.getDay() === 0){
-          this.state.ticket_type = `off-peak s`
-        } else if(longDate.getHours() < 10){
-          this.state.ticket_type = `anytime day s`
-        } else if(longDate.getHours() > 16 && date.getHours() < 19){
-          this.state.ticket_type = `anytime day s`
-        } else {
-          this.state.ticket_type = `off-peak s`
+        catch(error){
+          this.setState({endError:"Please enter a valid start and end station"})
         }
 
-        routeTemp = route.map(data => {
-          const start = data.from_point_name
-          const end = data.to_point_name
-          return { start, end }
-        })
+        console.log(startCode, endCode)
 
-        route = routeTemp
+        var route = []
+        var routeTemp
+        var date = this.state.date;
+        var time = this.state.time;
 
-        var startStation
-        var endStation
-        date = this.state.date
-        time = this.state.time
-        var stops = []
 
-        for(var counter = 0; counter < route.length; counter++){
-          endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
-          startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
-          var temp = await this.splitSingleTrip(startStation, endStation, date, time)
-          time = temp[1]
-          date = temp[2]
-          for(var i = 0; i < temp[0].length; i++){
-            if(stops.indexOf(temp[0][i]) === -1){
-              stops.push(temp[0][i]);
+        try {
+          this.setState({status:"calculatingRoute"})
+          await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
+            routeTemp = data.routes[0].route_parts
+            if(date === undefined){
+              date = data.request_time
+              date = date.slice(0,10)
+            }
+            for(counter = 0; counter < routeTemp.length; counter++){
+              if(routeTemp[counter].mode === "train"){
+                route.push(routeTemp[counter])
+              }
+            }
+            if(time === undefined){
+              time = route[0].departure_time
+            }
+            //potentially check which route arrives first
+          })
+
+          var tempTime = time.split(":")
+          var tempDate = date.split("-")
+          var longDate = new Date(tempDate[0], tempDate[1], tempDate[2], tempTime[0], tempTime[1])
+
+          if(longDate.getDay() === 6 || longDate.getDay() === 0){
+            this.state.ticket_type = `off-peak s`
+          } else if(longDate.getHours() < 10){
+            this.state.ticket_type = `anytime day s`
+          } else if(longDate.getHours() > 16 && date.getHours() < 19){
+            this.state.ticket_type = `anytime day s`
+          } else {
+            this.state.ticket_type = `off-peak s`
+          }
+
+          routeTemp = route.map(data => {
+            const start = data.from_point_name
+            const end = data.to_point_name
+            return { start, end }
+          })
+
+          route = routeTemp
+
+          var startStation
+          var endStation
+          date = this.state.date
+          time = this.state.time
+          var stops = []
+
+          for(var counter = 0; counter < route.length; counter++){
+            endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
+            startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
+            var temp = await this.splitSingleTrip(startStation, endStation, date, time)
+            time = temp[1]
+            date = temp[2]
+            for(var i = 0; i < temp[0].length; i++){
+              if(stops.indexOf(temp[0][i]) === -1){
+                stops.push(temp[0][i]);
+              }
             }
           }
+
+          this.setState({status:"calculatingFares"})
+
+          var result = await this.calculateFares(stops)
+
+          this.setState({result:result})
+          this.setState({status: "complete"})
+
+        } catch(error) {
+          console.log(error)
+          this.setState({status: "error"})
         }
-
-        this.setState({status:"calculatingFares"})
-
-        var result = await this.calculateFares(stops)
-
-        this.setState({result:result})
-        this.setState({status: "complete"})
-
-      } catch(error) {
-        console.log(error)
-        this.setState({status: "error"})
       }
     }
   }
@@ -439,25 +442,26 @@ class App extends Component {
         <div className="inner">
           <div id="form">
             <form onSubmit={this.handleSubmit}>
-              <div className="col">
+              <div className="row">
                 <label htmlFor="start">From:</label>
                 <AutoComplete
-                   id="start"
-                   name="start"
-                   placeholder="Start Station"
-                   value={this.state.start}
-                   onChange={this.handleChange}
+                  id="start"
+                  name="start"
+                  placeholder="Start Station"
+                  value={this.state.start}
+                  onChange={this.handleChange}
                  />
                 <label htmlFor="end">To:</label>
                 <AutoComplete
-                   id="end"
-                   name="end"
-                   placeholder="End Station"
-                   value={this.state.end}
-                   onChange={this.handleChange}
+                  id="end"
+                  name="end"
+                  placeholder="End Station"
+                  value={this.state.end}
+                  onChange={this.handleChange}
                  />
+                 <p>{this.state.stationError}</p>
               </div>
-              <div className="col">
+              <div className="row">
                 <label htmlFor="date">Date:</label>
                 <input
                   id="date"
@@ -468,7 +472,7 @@ class App extends Component {
                 />
                 <p>{this.state.dateError}</p>
               </div>
-              <div className="col">
+              <div className="row">
                 <label htmlFor="time">Time:</label>
                 <input
                   id="time"
@@ -479,7 +483,7 @@ class App extends Component {
                 />
                 <p>{this.state.timeError}</p>
               </div>
-              <div className="col">
+              <div className="row">
                 <label htmlFor="railcard">Railcard:</label>
                 <select
                   id="railcard"
@@ -492,7 +496,7 @@ class App extends Component {
                   <option value="SRN">Senior</option>
                 </select>
             </div>
-            <div className="col">
+            <div className="row">
               <input type="submit" value="Submit" />
             </div>
             </form>

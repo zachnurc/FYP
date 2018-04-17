@@ -4,8 +4,7 @@
 }
 
 .inner {
-  margin: 0 auto;
-  width: 1200px;
+  margin: 50px;
   color: #212121;
 }
 
@@ -13,22 +12,23 @@ div{
   margin: 10px;
 }
 
-.col {
+.row {
   display: flex;
   height: 22px;
 }
 
 form p{
   color: red;
-  margin: auto;
+  margin: auto 0;
 }
 
 #results td, th{
+  min-width: 20%;
   border: 1px solid black;
 }
 
 form{
-  background: #607D8B;
+  background: #512749;
   border-radius: 5px;
   border: 0px solid;
   padding: 10px;
@@ -38,4 +38,8 @@ form{
 
 label{
   margin-right: 10px;
+}
+
+.input-box-error{
+  border: 1px red solid
 }
