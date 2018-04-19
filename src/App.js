@@ -247,8 +247,6 @@ class App extends Component {
           var index = placeTable.findIndex(x => x.name===this.state.start);
           startCode = placeTable[index].code
 
-          console.log(startCode)
-
           //get location of start Station
           await getStationPlace(startCode).then(data=>{
             //loop through data to find right station code
@@ -298,8 +296,6 @@ class App extends Component {
         catch(error){
           this.setState({endError:"Please enter a valid start and end station"})
         }
-
-        console.log(startCode, endCode)
 
         var route = []
         var routeTemp
