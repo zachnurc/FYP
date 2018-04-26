@@ -529,7 +529,9 @@ class App extends Component {
             </div>
             </form>
           </div>
-          <p>Warning: All ticket prices shown are for off-peak tickets, if you require an anytime ticket then choose anytime from the ticket type drop down menu</p>
+          <div>
+            <p>Warning: All ticket prices shown are for off-peak tickets, if you require an anytime ticket then choose anytime from the ticket type drop down menu</p>
+          </div>
           <div id="results">
             {this.renderResults()}
           </div>
