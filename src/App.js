@@ -13,7 +13,7 @@ class App extends Component {
     this.state = {
       start: ``,
       end: ``,
-      ticket_type: `anytime`,
+      ticket_type: `off-peak s`,
       railcard: ``,
       result: ``,
       state: ``,
@@ -67,7 +67,6 @@ class App extends Component {
         endpos = i
       }
     }
-    console.log(stops, startpos, endpos)
     endTime = stops[endpos].aimed_arrival_time
     startTime = stops[startpos].aimed_departure_time
     date = stops[startpos].aimed_departure_date
@@ -324,20 +323,6 @@ class App extends Component {
             //potentially check which route arrives first
           })
 
-          var tempTime = time.split(":")
-          var tempDate = date.split("-")
-          var longDate = new Date(tempDate[0], tempDate[1], tempDate[2], tempTime[0], tempTime[1])
-
-          if(longDate.getDay() === 6 || longDate.getDay() === 0){
-            this.state.ticket_type = `off-peak s`
-          } else if(longDate.getHours() < 10){
-            this.state.ticket_type = `anytime day s`
-          } else if(longDate.getHours() > 16 && date.getHours() < 19){
-            this.state.ticket_type = `anytime day s`
-          } else {
-            this.state.ticket_type = `off-peak s`
-          }
-
           routeTemp = route.map(data => {
             const start = data.from_point_name
             const end = data.to_point_name
@@ -374,7 +359,6 @@ class App extends Component {
           var result = await this.calculateFares(stops)
 
           this.setState({route: route})
-          console.log(this.state.route)
           this.setState({result: result})
           this.setState({status: "complete"})
 
@@ -529,10 +513,23 @@ class App extends Component {
                 </select>
             </div>
             <div className="row">
+                <label htmlFor="ticket_type">Ticket Type:</label>
+                <select
+                  id="ticket_type"
+                  name="ticket_type"
+                  value={this.state.ticket_type}
+                  onChange={this.handleChange}
+                >
+                  <option value="off-peak s">Off Peak</option>
+                  <option value="anytime s">Anytime</option>
+                </select>
+            </div>
+            <div className="row">
               <input type="submit" value="Submit" />
             </div>
             </form>
           </div>
+          <p>Warning: All ticket prices shown are for off-peak tickets, if you require an anytime ticket then choose anytime from the ticket type drop down menu</p>
           <div id="results">
             {this.renderResults()}
           </div>
