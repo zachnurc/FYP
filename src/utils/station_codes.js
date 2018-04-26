@@ -4873,6 +4873,10 @@ export default placeTable = [
   code: "IFD"
 },
 {
+  name: "Ilkeston",
+  code: "ILN"
+},
+{
   name: "Ilkley",
   code: "ILK"
 },
