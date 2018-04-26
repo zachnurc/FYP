@@ -20,6 +20,7 @@ class App extends Component {
       stationError: ``,
       timeError: ``,
       dateError: ``,
+      route: ``,
       cost: ``
     }
 
@@ -367,7 +368,8 @@ class App extends Component {
 
           var result = await this.calculateFares(stops)
 
-          this.setState({result:result})
+          this.setState({route: route})
+          this.setState({result: result})
           this.setState({status: "complete"})
 
         } catch(error) {
@@ -381,6 +383,25 @@ class App extends Component {
   renderResults(){
 
     if (this.state.status === "complete"){
+      const Route = ({routes}) => (
+        <table>
+          <thead>
+            <tr>
+              <th>Start Station</th>
+              <th>End Station</th>
+            </tr>
+          </thead>
+          <tbody>
+              {routes.map((route, i) => (
+                <tr key={i}>
+                  <td key={i + route.start}>{route.start}</td>
+                  <td key={i + route.end}>{route.end}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+       )
+      
       const Body = ({results}) => (
         <table>
           <thead>
@@ -408,6 +429,7 @@ class App extends Component {
       );
 
       return (
+        <Route routes={this.state.route}/>
         <Body results={this.state.result}/>
       );
     } else if(this.state.status === "loading"){
