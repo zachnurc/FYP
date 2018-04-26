@@ -50,13 +50,10 @@ class App extends Component {
       })
     }
 
-    consolelog(serviceURL)
-
     await getStations(serviceURL).then(data=>{
       stops = data
     })
-
-
+    
     var startpos
     var endpos
     var temp = []
@@ -70,6 +67,9 @@ class App extends Component {
         endpos = i
       }
     }
+    endTime = stops[endpos].aimed_arrival_time
+    startTime = stops[startpos].aimed_departure_time
+    date = stops[endpos].aimed_departure_date
     stops = temp
 
     if (startpos > endpos){
@@ -80,12 +80,6 @@ class App extends Component {
     }
 
     stops = stops.slice(startpos, endpos+1)
-    date = stops[stops.length-1].aimed_departure_date
-    endTime = stops[stops.length-1].aimed_arrival_time
-    startTime = stops[0].aimed_departure_time
-    
-    console.log(stops)
-    console.log(startTime, endTime)
     
     return [stops, startTime, endTime, date]
 
