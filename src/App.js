@@ -50,6 +50,7 @@ class App extends Component {
       })
     }
 
+    consolelog(serviceURL)
 
     await getStations(serviceURL).then(data=>{
       stops = data
