@@ -345,7 +345,7 @@ class App extends Component {
             try{
               endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
             }catch(error){
-              endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end.substring(0, route[counter].en.indexOf(" ")))].code
+              endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end.substring(0, route[counter].end.indexOf(" ")))].code
             }
             startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
             var temp = await this.splitSingleTrip(startStation, endStation, date, time)
