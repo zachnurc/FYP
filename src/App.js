@@ -370,9 +370,7 @@ class App extends Component {
   }
 
   renderResults(){
-
-    if (this.state.status === "complete"){
-      const Route = ({routes}) => (
+    const Route = ({routes}) => (
         <table>
           <thead>
             <tr>
@@ -420,7 +418,7 @@ class App extends Component {
           </tbody>
         </table>
       );
-
+    if (this.state.status === "complete"){
       return (
         <div>
           <h3>Route:</h3>
@@ -442,9 +440,17 @@ class App extends Component {
         <h3>Calculating Fares...</h3>
       )
     } else if(this.state.status === "error") {
-      return (
+      if(this.state.route === undefined){
+        return (
+          <h3>An error has occured, please try again later or contact Zach</h3>
+        );
+      }else {
+        <div>
+          <h3>Route:</h3>
+          <Route routes={this.state.route}/> 
+        </div>
         <h3>An error has occured, please try again later or contact Zach</h3>
-      );
+      }
     } else {
       return null
     }
