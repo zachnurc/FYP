@@ -307,6 +307,7 @@ class App extends Component {
           this.setState({status:"calculatingRoute"})
           await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
             routeTemp = data.routes[0].route_parts
+            console.log(routeTemp)
             if(date === undefined){
               date = data.request_time
               date = date.slice(0,10)
