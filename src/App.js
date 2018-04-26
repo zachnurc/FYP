@@ -530,6 +530,7 @@ class App extends Component {
             </form>
           </div>
           <div>
+            <p>Please note if the date and time are left blank it will default to a live search</p>
             <p>Warning: All ticket prices shown are for off-peak tickets, if you require an anytime ticket then choose anytime from the ticket type drop down menu</p>
           </div>
           <div id="results">
