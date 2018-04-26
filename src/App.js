@@ -199,6 +199,8 @@ class App extends Component {
       }
     }
 
+    console.log(temp)
+    
     result = temp.map(data => {
       const start = placeTable[placeTable.findIndex(x => x.code===data.substring(0, data.indexOf("_")))].name
       const end = placeTable[placeTable.findIndex(x => x.code===data.substring(data.indexOf("_") + 1, data.indexOf(":")))].name
