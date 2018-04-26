@@ -445,11 +445,13 @@ class App extends Component {
           <h3>An error has occured, please try again later or contact Zach</h3>
         );
       }else {
-        <div>
-          <h3>Route:</h3>
-          <Route routes={this.state.route}/> 
-          <h3>An error has occured, please try again later or contact Zach</h3>
-        </div>
+        return(
+          <div>
+            <h3>Route:</h3>
+            <Route routes={this.state.route}/> 
+            <h3>An error has occured, please try again later or contact Zach</h3>
+          </div>
+        )
       }
     } else {
       return null
