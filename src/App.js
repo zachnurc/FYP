@@ -391,7 +391,7 @@ class App extends Component {
               ))}
           </tbody>
         </table>
-       )
+       );
       
       const Body = ({results}) => (
         <table>
@@ -440,7 +440,7 @@ class App extends Component {
         <h3>Calculating Fares...</h3>
       )
     } else if(this.state.status === "error") {
-      if(this.state.route === undefined){
+      if(this.state.route === ""){
         return (
           <h3>An error has occured, please try again later or contact Zach</h3>
         );
