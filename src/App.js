@@ -430,7 +430,9 @@ class App extends Component {
 
       return (
         <div>
+          <h3>Route:</h3>
           <Route routes={this.state.route}/>
+          <h3>Cost:</h3>
           <Body results={this.state.result}/>
         </div>
       );
