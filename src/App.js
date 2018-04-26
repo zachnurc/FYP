@@ -429,8 +429,10 @@ class App extends Component {
       );
 
       return (
-        <Route routes={this.state.route}/>
-        <Body results={this.state.result}/>
+        <div>
+          <Route routes={this.state.route}/>
+          <Body results={this.state.result}/>
+        </div>
       );
     } else if(this.state.status === "loading"){
       return (
