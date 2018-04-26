@@ -38,6 +38,7 @@ class App extends Component {
     var stops = []
     distance = []
     var endTime
+    var startTime
 
     if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
@@ -80,8 +81,9 @@ class App extends Component {
     stops = stops.slice(startpos, endpos+1)
     date = stops[stops.length-1].aimed_departure_date
     endTime = stops[stops.length-1].aimed_arrival_time
-
-    return [stops, endTime, date]
+    startTime = stops[0].aimed_departure_time
+    
+    return [stops, startTime, endTime, date]
 
   }
 
@@ -340,7 +342,9 @@ class App extends Component {
           routeTemp = route.map(data => {
             const start = data.from_point_name
             const end = data.to_point_name
-            return { start, end }
+            var startTime = 0
+            var endTime = 0
+            return { start, end, startTime, endTime }
           })
 
           route = routeTemp
@@ -355,8 +359,10 @@ class App extends Component {
             endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
             startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
             var temp = await this.splitSingleTrip(startStation, endStation, date, time)
-            time = temp[1]
-            date = temp[2]
+            route[counter].startTime = temp[1]
+            route[counter].endTime = temp[2]
+            time = temp[2]
+            date = temp[3]
             for(var i = 0; i < temp[0].length; i++){
               if(stops.indexOf(temp[0][i]) === -1){
                 stops.push(temp[0][i]);
@@ -388,14 +394,18 @@ class App extends Component {
           <thead>
             <tr>
               <th>Start Station</th>
+              <th>Departure Time</th>
               <th>End Station</th>
+              <th>Arrival Time</th>
             </tr>
           </thead>
           <tbody>
               {routes.map((route, i) => (
                 <tr key={i}>
                   <td key={i + route.start}>{route.start}</td>
+                  <td key={i + route.startTime>{route.startTime}</td>
                   <td key={i + route.end}>{route.end}</td>
+                  <td key={i + route.endTime}>{route.endTime}</td>
                 </tr>
               ))}
           </tbody>
