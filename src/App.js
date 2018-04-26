@@ -339,6 +339,8 @@ class App extends Component {
           time = this.state.time
           var stops = []
 
+          console.log(route)
+          
           for(var counter = 0; counter < route.length; counter++){
             endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
             startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
@@ -354,6 +356,8 @@ class App extends Component {
             }
           }
 
+          console.log(stops)
+          
           this.setState({status:"calculatingFares"})
 
           var result = await this.calculateFares(stops)
