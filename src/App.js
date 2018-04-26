@@ -303,6 +303,7 @@ class App extends Component {
         var date = this.state.date;
         var time = this.state.time;
 
+        console.log(start, end, startLocationLat, endLocationLat)
 
         try {
           this.setState({status:"calculatingRoute"})
