@@ -375,6 +375,7 @@ class App extends Component {
           var result = await this.calculateFares(stops)
 
           this.setState({route: route})
+          console.log(this.state.route)
           this.setState({result: result})
           this.setState({status: "complete"})
 
@@ -394,18 +395,18 @@ class App extends Component {
           <thead>
             <tr>
               <th>Start Station</th>
-              <th>Departure Time</th>
+              //<th>Departure Time</th>
               <th>End Station</th>
-              <th>Arrival Time</th>
+              //<th>Arrival Time</th>
             </tr>
           </thead>
           <tbody>
               {routes.map((route, i) => (
                 <tr key={i}>
                   <td key={i + route.start}>{route.start}</td>
-                  <td key={i + route.startTime>{route.startTime}</td>
+                  //<td key={i + route.startTime>{route.startTime}</td>
                   <td key={i + route.end}>{route.end}</td>
-                  <td key={i + route.endTime}>{route.endTime}</td>
+                  //<td key={i + route.endTime}>{route.endTime}</td>
                 </tr>
               ))}
           </tbody>
