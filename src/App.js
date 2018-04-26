@@ -344,7 +344,11 @@ class App extends Component {
             }catch(error){
               endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end.substring(0, route[counter].end.indexOf(" ")))].code
             }
-            startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
+            try{
+              startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
+            }catch(error){
+              startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start.substring(0, route[counter].start.indexOf(" ")))].code
+            }
             var temp = await this.findStops(startStation, endStation, date, time)
             route[counter].startTime = temp[1]
             route[counter].endTime = temp[2]
