@@ -83,6 +83,9 @@ class App extends Component {
     endTime = stops[stops.length-1].aimed_arrival_time
     startTime = stops[0].aimed_departure_time
     
+    console.log(stops)
+    console.log(startTime, endTime)
+    
     return [stops, startTime, endTime, date]
 
   }
