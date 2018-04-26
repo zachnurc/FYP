@@ -333,6 +333,8 @@ class App extends Component {
 
           route = routeTemp
 
+          console.log(route)
+          
           var startStation
           var endStation
           date = this.state.date
