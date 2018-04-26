@@ -70,7 +70,7 @@ class App extends Component {
     console.log(stops, startpos, endpos)
     endTime = stops[endpos].aimed_arrival_time
     startTime = stops[startpos].aimed_departure_time
-    date = stops[endpos].aimed_departure_date
+    date = stops[startpos].aimed_departure_date
     stops = temp
 
     if (startpos > endpos){
