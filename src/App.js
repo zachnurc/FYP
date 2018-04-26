@@ -32,7 +32,7 @@ class App extends Component {
     this.setState({ [e.target.name]: e.target.value })
   }
 
-  async splitSingleTrip(start,end,date,time){
+  async findStops(start,end,date,time){
 
     var serviceURL
     var stops = []
@@ -345,7 +345,7 @@ class App extends Component {
               endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end.substring(0, route[counter].end.indexOf(" ")))].code
             }
             startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start)].code
-            var temp = await this.splitSingleTrip(startStation, endStation, date, time)
+            var temp = await this.findStops(startStation, endStation, date, time)
             route[counter].startTime = temp[1]
             route[counter].endTime = temp[2]
             time = temp[2]
