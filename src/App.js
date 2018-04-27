@@ -91,6 +91,8 @@ class App extends Component {
     var fareData = []
     var start = stops[0]
 
+    console.log(stops)
+    
     for(var youter = 0; youter < stops.length-1; youter++) {
       for(var yinner = youter+1; yinner < stops.length; yinner++){
         await getFare(stops[youter],stops[yinner],this.state.railcard).then(data=>{
@@ -197,7 +199,7 @@ class App extends Component {
     result = temp.map(data => {
       const start = placeTable[placeTable.findIndex(x => x.code===data.substring(0, data.indexOf("_")))].name
       const end = placeTable[placeTable.findIndex(x => x.code===data.substring(data.indexOf("_") + 1, data.indexOf(":")))].name
-      var cost = parseFloat(data.split(`:`)[1])
+      var cost = parseFloat(data.split(`:`)[1])/100
       cost = cost.toFixed(2)
       return { start, end, cost }
     })
