@@ -379,7 +379,7 @@ class App extends Component {
                //get route between start and end
                //append to route array
               //minus 1 from counter
-              await getStationPlace(endCode).then(data=>{
+              await getStationPlace(endStation).then(data=>{
                 for(var options = 0; options < data.length; options++){
                   if(data[options].station_code === endCode){
                     endLocationLat = data[options].latitude
@@ -387,7 +387,7 @@ class App extends Component {
                   }
                 }
               })
-              await getStationPlace(startCode).then(data=>{
+              await getStationPlace(startStation).then(data=>{
                 //loop through data to find right station code
                 for(var options = 0; options < data.length; options++){
                   if(data[options].station_code === startCode){
@@ -402,15 +402,27 @@ class App extends Component {
                   date = data.request_time
                   date = date.slice(0,10)
                 }
+                vet temp = []
                 for(var x = 0; x < routeTemp.length; x++){
                   if(routeTemp[x].mode === "train"){
-                    route.splice(counter+x, 0, routeTemp[x])
+                    temp.push(routeTemp[x])
                   }
+                }
+                routeTemp = temp.map(data => {
+                  const start = data.from_point_name
+                  const end = data.to_point_name
+                  var startTime = 0
+                  var endTime = 0
+                  return { start, end, startTime, endTime }
+                })
+                for(var x = 0; x < routeTemp.length; x++){
+                  route.splice(counter + x, 0, routeTemp[x])
                 }
                 if(time === undefined){
                   time = route[0].departure_time
                 }
               })
+              counter --
               console.log(route)
             }
           }
