@@ -229,7 +229,7 @@ class App extends Component {
 
     var status = this.state.status
 
-    if(!(status === "loading" || status === "calculatingFares" || status === "calculatingRoute")){
+    if(!(status === "calculatingFares" || status === "calculatingRoute")){
 
       this.setState({status:"calculatingRoute"})
 
@@ -434,10 +434,6 @@ class App extends Component {
           <h3>Cost:</h3>
           <Body results={this.state.result}/>
         </div>
-      );
-    } else if(this.state.status === "loading"){
-      return (
-        <h3>Loading...</h3>
       );
     } else if(this.state.status === "calculatingRoute"){
       return(
