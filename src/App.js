@@ -352,6 +352,8 @@ class App extends Component {
           time = this.state.time
           var stops = []
           
+          console.log(route)
+          
           for(var counter = 0; counter < route.length; counter++){
             try{
               endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
