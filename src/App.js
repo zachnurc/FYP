@@ -333,7 +333,6 @@ class App extends Component {
             if(time === undefined){
               time = route[0].departure_time
             }
-            //potentially check which route arrives first
           })
 
           routeTemp = route.map(data => {
@@ -365,15 +364,54 @@ class App extends Component {
             }catch(error){
               startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start.substring(0, route[counter].start.indexOf(" ")))].code
             }
-            var temp = await this.findStops(startStation, endStation, date, time)
-            route[counter].startTime = temp[1]
-            route[counter].endTime = temp[2]
-            time = temp[2]
-            date = temp[3]
-            for(var i = 0; i < temp[0].length; i++){
-              if(stops.indexOf(temp[0][i]) === -1){
-                stops.push(temp[0][i]);
+            try {
+              var temp = await this.findStops(startStation, endStation, date, time)
+              route[counter].startTime = temp[1]
+              route[counter].endTime = temp[2]
+              time = temp[2]
+              date = temp[3]
+              for(var i = 0; i < temp[0].length; i++){
+                if(stops.indexOf(temp[0][i]) === -1){
+                  stops.push(temp[0][i]);
+                }
               }
+            } catch(error) {
+               //get route between start and end
+               //append to route array
+              //minus 1 from counter
+              await getStationPlace(endCode).then(data=>{
+                for(var options = 0; options < data.length; options++){
+                  if(data[options].station_code === endCode){
+                    endLocationLat = data[options].latitude
+                    endLocationLong = data[options].longitude
+                  }
+                }
+              })
+              await getStationPlace(startCode).then(data=>{
+                //loop through data to find right station code
+                for(var options = 0; options < data.length; options++){
+                  if(data[options].station_code === startCode){
+                    startLocationLat = data[options].latitude
+                    startLocationLong = data[options].longitude
+                  }
+                }
+              })
+              await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
+                routeTemp = data.routes[0].route_parts
+                if(date === undefined){
+                  date = data.request_time
+                  date = date.slice(0,10)
+                }
+                for(var x = 0; x < routeTemp.length; x++){
+                  if(routeTemp[x].mode === "train"){
+                    route.splice(counter+x, 0, routeTemp[x])
+                  }
+                }
+                if(time === undefined){
+                  time = route[0].departure_time
+                }
+              })
+              console.log(route)
             }
           }
           
