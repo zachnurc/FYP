@@ -39,7 +39,7 @@ class App extends Component {
     var endTime
     var startTime
 
-    if (time === undefined && date === undefined){
+    if (time === undefined || date === undefined){
       await getService(start, end, "", "").then(data=>{
         serviceURL = data
       })
@@ -378,7 +378,8 @@ class App extends Component {
             } catch(error) {
                //get route between start and end
                //append to route array
-              //minus 1 from counter
+               //minus 1 from counter
+              date = ""
               console.log(startStation,endStation)
               await getStationPlace(endStation).then(data=>{
                 for(var options = 0; options < data.length; options++){
