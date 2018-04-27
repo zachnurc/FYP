@@ -383,7 +383,7 @@ class App extends Component {
               await getStationPlace(endStation).then(data=>{
                 for(var options = 0; options < data.length; options++){
                   if(data[options].station_code === endStation){
-                    console.log(end)
+                    console.log("end")
                     endLocationLat = data[options].latitude
                     endLocationLong = data[options].longitude
                   }
@@ -393,7 +393,7 @@ class App extends Component {
                 //loop through data to find right station code
                 for(var options = 0; options < data.length; options++){
                   if(data[options].station_code === startStation){
-                    console.log(start)
+                    console.log("start")
                     startLocationLat = data[options].latitude
                     startLocationLong = data[options].longitude
                   }
