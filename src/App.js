@@ -379,7 +379,6 @@ class App extends Component {
                //get route between start and end
                //append to route array
                //minus 1 from counter
-              date = ""
               console.log(startStation,endStation)
               await getStationPlace(endStation).then(data=>{
                 for(var options = 0; options < data.length; options++){
