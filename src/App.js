@@ -197,7 +197,7 @@ class App extends Component {
     result = temp.map(data => {
       const start = placeTable[placeTable.findIndex(x => x.code===data.substring(0, data.indexOf("_")))].name
       const end = placeTable[placeTable.findIndex(x => x.code===data.substring(data.indexOf("_") + 1, data.indexOf(":")))].name
-      var cost = parseFloat(data.split(`:`)[1])/100
+      var cost = parseFloat(data.split(`:`)[1])
       cost = cost.toFixed(2)
       return { start, end, cost }
     })
