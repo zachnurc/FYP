@@ -126,6 +126,7 @@ class App extends Component {
               catch(error){
                 fare = fareCopy
                 ticket_type = "anytime s"
+                console.log(fare)
                 fare = filterItems(ticket_type)
                 console.log(fare)
                 all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
