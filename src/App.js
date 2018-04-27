@@ -109,10 +109,6 @@ class App extends Component {
           }
 
           var fareCopy = fare
-          //look at changing this to catch every fail
-          //also moron this doesnt't work properly
-          //this falls to catch on first fail
-          //the else statement here probably needs looking at again
           if(this.state.ticket_type === `off-peak s`){
             try {
               fare = filterItems(ticket_type)
