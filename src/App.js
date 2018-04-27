@@ -365,14 +365,14 @@ class App extends Component {
               startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start.substring(0, route[counter].start.indexOf(" ")))].code
             }
             try {
-              var temp = await this.findStops(startStation, endStation, date, time)
-              route[counter].startTime = temp[1]
-              route[counter].endTime = temp[2]
-              time = temp[2]
-              date = temp[3]
-              for(var i = 0; i < temp[0].length; i++){
-                if(stops.indexOf(temp[0][i]) === -1){
-                  stops.push(temp[0][i]);
+              var tempStops = await this.findStops(startStation, endStation, date, time)
+              route[counter].startTime = tempStops[1]
+              route[counter].endTime = tempStops[2]
+              time = tempStops[2]
+              date = tempStops[3]
+              for(var i = 0; i < tempStops[0].length; i++){
+                if(stops.indexOf(tempStops[0][i]) === -1){
+                  stops.push(tempStops[0][i]);
                 }
               }
             } catch(error) {
@@ -402,7 +402,7 @@ class App extends Component {
                   date = data.request_time
                   date = date.slice(0,10)
                 }
-                vet temp = []
+                var temp = []
                 for(var x = 0; x < routeTemp.length; x++){
                   if(routeTemp[x].mode === "train"){
                     temp.push(routeTemp[x])
