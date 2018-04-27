@@ -59,6 +59,7 @@ export function getRoute(startLat, startLong, endLat, endLong, date, time){
   } else {
     url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&not_modes=bus`
   }
+  console.log(url)
   return get(url).then((response)=>{
     if(response.data.error){
       throw new Error('api error')
