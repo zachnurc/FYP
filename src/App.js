@@ -381,6 +381,7 @@ class App extends Component {
                //minus 1 from counter
               console.log(startStation,endStation)
               await getStationPlace(endStation).then(data=>{
+                console.log("end1", data)
                 for(var options = 0; options < data.length; options++){
                   if(data[options].station_code === endStation){
                     console.log("end", data)
