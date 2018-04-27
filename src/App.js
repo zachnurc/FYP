@@ -127,6 +127,7 @@ class App extends Component {
                 fare = fareCopy
                 ticket_type = "anytime s"
                 fare = filterItems(ticket_type)
+                console.log(fare)
                 all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
                 ticket_type = "off-peak s"
               }
