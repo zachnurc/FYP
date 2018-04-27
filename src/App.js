@@ -4,7 +4,7 @@ import { getService, getStations, getFare, getStationPlace, getRoute } from './u
 import placeTable from './utils/station_codes';
 import AutoComplete from './autosuggest.js';
 
-let distance = [];
+let all_fares = [];
 
 class App extends Component {
 
@@ -36,7 +36,6 @@ class App extends Component {
 
     var serviceURL
     var stops = []
-    distance = []
     var endTime
     var startTime
 
@@ -74,7 +73,6 @@ class App extends Component {
 
     if (startpos > endpos){
       stops.reverse()
-      temp = []
       startpos = stops.indexOf(start)
       endpos = stops.indexOf(end)
     }
@@ -88,6 +86,7 @@ class App extends Component {
   async calculateFares(stops){
 
     var ticket_type = this.state.ticket_type
+    all_fares = []
     var fare = []
     var fareData = []
     var start = stops[0]
@@ -112,21 +111,21 @@ class App extends Component {
           if(this.state.ticket_type === `off-peak s`){
             try {
               fare = filterItems(ticket_type)
-              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+              all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
             }
             catch(err) {
               try {
                 fare = fareCopy
                 ticket_type = "anytime day s"
                 fare = filterItems(ticket_type)
-                distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+                all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
                 ticket_type = "off-peak s"
               }
               catch(error){
                 fare = fareCopy
                 ticket_type = "anytime s"
                 fare = filterItems(ticket_type)
-                distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+                all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
                 ticket_type = "off-peak s"
               }
             }
@@ -134,14 +133,14 @@ class App extends Component {
             try {
               ticket_type = "anytime day s"
               fare = filterItems(ticket_type)
-              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+              all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
               ticket_type = "off-peak s"
             }
             catch(error){
               fare = fareCopy
               ticket_type = "anytime s"
               fare = filterItems(ticket_type)
-              distance.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
+              all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[0].fare}`)
               ticket_type = "off-peak s"
             }
           }
@@ -149,14 +148,14 @@ class App extends Component {
       }
     }
 
-    const getDistance = (start, end) => {
-      for(var counter = 0; counter < distance.length; counter++){
-        if(distance[counter].includes(`${start}_${end}`)){
+    const getCost = (start, end) => {
+      for(var counter = 0; counter < all_fares.length; counter++){
+        if(all_fares[counter].includes(`${start}_${end}`)){
           var journey_part = counter
         }
       }
       try {
-        var temp = parseInt(distance[journey_part].split(`:`)[1])
+        var temp = parseInt(all_fares[journey_part].split(`:`)[1])
         return temp
       }
       catch(err) {
@@ -164,20 +163,20 @@ class App extends Component {
       }
     }
 
-    const allCombinsFrom = stat1 => {
+    const allCombinsFrom = station1 => {
 
-      const idx = stops.indexOf(stat1)
+      const idx = stops.indexOf(station1)
 
-      if (idx+1 === stops.length) return { cost: 0, journey: [stat1] }
+      if (idx+1 === stops.length) return { cost: 0, journey: [station1] }
 
-      const distances = stops.slice(idx+1).map(stat2 => {
-        const rest = allCombinsFrom(stat2)
-        rest.cost += getDistance(stat1, stat2)
+      const costs = stops.slice(idx+1).map(station2 => {
+        const rest = allCombinsFrom(station2)
+        rest.cost += getCost(station1, station2)
         return rest
       })
 
-      const smallest = distances.reduce((small, x) => x.cost < small.cost ? x : small)
-      smallest.journey.unshift(stat1)
+      const smallest = costs.reduce((small, x) => x.cost < small.cost ? x : small)
+      smallest.journey.unshift(station1)
 
       return smallest
     }
@@ -188,9 +187,9 @@ class App extends Component {
     var temp = []
 
     for(var i = 0; i < result.journey.length - 1; i++){
-      for(var x = 0; x < distance.length; x++){
-        if(distance[x].includes(`${result.journey[i]}_${result.journey[i+1]}`)){
-          temp.push(distance[x])
+      for(var x = 0; x < all_fares.length; x++){
+        if(all_fares[x].includes(`${result.journey[i]}_${result.journey[i+1]}`)){
+          temp.push(all_fares[x])
         }
       }
     }
@@ -198,7 +197,7 @@ class App extends Component {
     result = temp.map(data => {
       const start = placeTable[placeTable.findIndex(x => x.code===data.substring(0, data.indexOf("_")))].name
       const end = placeTable[placeTable.findIndex(x => x.code===data.substring(data.indexOf("_") + 1, data.indexOf(":")))].name
-      var cost = parseFloat(data.substring(data.indexOf(":") + 1, data.length - 1))/10
+      var cost = parseFloat(data.split(`:`)[1])/10
       cost = cost.toFixed(2)
       return { start, end, cost }
     })
