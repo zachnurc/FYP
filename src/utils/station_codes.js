@@ -5801,6 +5801,10 @@ export default placeTable = [
   code: "KGX"
 },
 {
+  name: "London King's Cross",
+  code: "KGX"
+},
+{
   name: "London Liverpool Street",
   code: "LST"
 },
