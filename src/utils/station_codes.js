@@ -5804,6 +5804,10 @@ export default placeTable = [
   name: "London Liverpool Street",
   code: "LST"
 },
+ {
+  name: "Liverpool Street",
+  code: "LST"
+},
 {
   name: "London Marylebone",
   code: "MYB"
