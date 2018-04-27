@@ -54,7 +54,7 @@ export function getStationPlace(stationCode){
 
 export function getRoute(startLat, startLong, endLat, endLong, date, time){
   var url;
-  if (date == null && time == null){
+  if (date == null || time == null){
     url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}.json?app_id=${APP_ID}&app_key=${APP_KEY}&not_modes=bus`
   } else {
     url = `https://transportapi.com/v3/uk/public/journey/from/lonlat:${startLong},${startLat}/to/lonlat:${endLong},${endLat}/at/${date}/${time}.json?app_id=${APP_ID}&app_key=${APP_KEY}&not_modes=bus`
