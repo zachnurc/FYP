@@ -183,7 +183,7 @@ class App extends Component {
     }
 
     const allCombinsFrom = station1 => {
-
+      console.log(station1)
       const idx = stops.indexOf(station1)
 
       if (idx+1 === stops.length) return { cost: 0, journey: [station1] }
