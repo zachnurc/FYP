@@ -41,6 +41,7 @@ export function getFare(start, end, railcard){
 
 export function getStationPlace(stationCode){
   const url = `https://transportapi.com/v3/uk/places.json?app_id=${APP_ID}&app_key=${APP_KEY}&query=${stationCode}&type=train_station`
+  console.log(url)
   return get(url).then((response)=>{
     if(response.data.error){
       throw new Error('api error')
