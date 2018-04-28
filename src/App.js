@@ -39,7 +39,7 @@ class App extends Component {
     var endTime
     var startTime
 
-    if (time === undefined || date === undefined){
+    if (time === undefined && date === undefined){
       await getService(start, end, "", "").then(data=>{
         serviceURL = data
       })
@@ -183,7 +183,7 @@ class App extends Component {
     }
 
     const allCombinsFrom = station1 => {
-      console.log(station1)
+
       const idx = stops.indexOf(station1)
 
       if (idx+1 === stops.length) return { cost: 0, journey: [station1] }
@@ -333,6 +333,7 @@ class App extends Component {
             if(time === undefined){
               time = route[0].departure_time
             }
+            //potentially check which route arrives first
           })
 
           routeTemp = route.map(data => {
@@ -351,8 +352,6 @@ class App extends Component {
           time = this.state.time
           var stops = []
           
-          console.log(route)
-          
           for(var counter = 0; counter < route.length; counter++){
             try{
               endStation = placeTable[placeTable.findIndex(x => x.name===route[counter].end)].code
@@ -364,74 +363,17 @@ class App extends Component {
             }catch(error){
               startStation = placeTable[placeTable.findIndex(x => x.name===route[counter].start.substring(0, route[counter].start.indexOf(" ")))].code
             }
-            try {
-              var tempStops = await this.findStops(startStation, endStation, date, time)
-              route[counter].startTime = tempStops[1]
-              route[counter].endTime = tempStops[2]
-              time = tempStops[2]
-              date = tempStops[3]
-              for(var i = 0; i < tempStops[0].length; i++){
-                if(stops.indexOf(tempStops[0][i]) === -1){
-                  stops.push(tempStops[0][i]);
-                }
+            var temp = await this.findStops(startStation, endStation, date, time)
+            route[counter].startTime = temp[1]
+            route[counter].endTime = temp[2]
+            time = temp[2]
+            date = temp[3]
+            for(var i = 0; i < temp[0].length; i++){
+              if(stops.indexOf(temp[0][i]) === -1){
+                stops.push(temp[0][i]);
               }
-            } catch(error) {
-               //get route between start and end
-               //append to route array
-               //minus 1 from counter
-              console.log(startStation,endStation)
-              await getStationPlace(endStation).then(data=>{
-                console.log("end1", data)
-                for(var options = 0; options < data.length; options++){
-                  if(data[options].station_code === endStation){
-                    console.log("end", data)
-                    endLocationLat = data[options].latitude
-                    endLocationLong = data[options].longitude
-                  }
-                }
-              })
-              await getStationPlace(startStation).then(data=>{
-                //loop through data to find right station code
-                for(var options = 0; options < data.length; options++){
-                  if(data[options].station_code === startStation){
-                    console.log("start", data)
-                    startLocationLat = data[options].latitude
-                    startLocationLong = data[options].longitude
-                  }
-                }
-              })
-              await getRoute(startLocationLat,startLocationLong,endLocationLat,endLocationLong,date,time).then(data=>{
-                routeTemp = data.routes[0].route_parts
-                if(date === undefined){
-                  date = data.request_time
-                  date = date.slice(0,10)
-                }
-                var temp = []
-                for(var x = 0; x < routeTemp.length; x++){
-                  if(routeTemp[x].mode === "train"){
-                    temp.push(routeTemp[x])
-                  }
-                }
-                routeTemp = temp.map(data => {
-                  const start = data.from_point_name
-                  const end = data.to_point_name
-                  var startTime = 0
-                  var endTime = 0
-                  return { start, end, startTime, endTime }
-                })
-                for(var x = 0; x < routeTemp.length; x++){
-                  route.splice(counter + x, 0, routeTemp[x])
-                }
-                if(time === undefined){
-                  time = route[0].departure_time
-                }
-              })
-              counter --
-              console.log(route)
             }
           }
-          
-          console.log(stops)
           
           this.setState({status:"calculatingFares"})
 
