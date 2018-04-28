@@ -431,6 +431,8 @@ class App extends Component {
             }
           }
           
+          console.log(stops)
+          
           this.setState({status:"calculatingFares"})
 
           var result = await this.calculateFares(stops)
