@@ -127,29 +127,21 @@ class App extends Component {
               fare = filterItems(ticket_type)
               all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
             } catch(err) {
-              try {
+              try{
                 fare = fareCopy
-                  ticket_type = "offpeak s"
-                  fare = filterItems(ticket_type)
-                  all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
-                  ticket_type = "off-peak s"
-              }catch(error) {
-                try{
+                ticket_type = "anytime day s"
+                fare = filterItems(ticket_type)
+                all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
+                ticket_type = "off-peak s"
+              } catch(error){
+                try {
                   fare = fareCopy
-                  ticket_type = "anytime day s"
+                  ticket_type = "anytime s"
                   fare = filterItems(ticket_type)
                   all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
                   ticket_type = "off-peak s"
-                } catch(error){
-                  try {
-                    fare = fareCopy
-                    ticket_type = "anytime s"
-                    fare = filterItems(ticket_type)
-                    all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
-                    ticket_type = "off-peak s"
-                  } catch(error) {
-                    all_fares.push(`${stops[youter]}_${stops[yinner]}:Infinity`)
-                  }
+                } catch(error) {
+                  all_fares.push(`${stops[youter]}_${stops[yinner]}:Infinity`)
                 }
               }
             }
