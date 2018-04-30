@@ -141,7 +141,7 @@ class App extends Component {
                   all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
                   ticket_type = "off-peak s"
                 } catch(error) {
-                  all_fares.push(`${stops[youter]}_${stops[yinner]}:Infinity`)
+                  all_fares.push(`${stops[youter]}_${stops[yinner]}:99999`)
                 }
               }
             }
@@ -159,7 +159,7 @@ class App extends Component {
                 all_fares.push (`${stops[youter]}_${stops[yinner]}:${fare[cheapest(fare)].fare}`)
                 ticket_type = "off-peak s"
               } catch(error) {
-                all_fares.push(`${stops[youter]}_${stops[yinner]}:Infinity`)
+                all_fares.push(`${stops[youter]}_${stops[yinner]}:99999`)
               }
             }
           }
